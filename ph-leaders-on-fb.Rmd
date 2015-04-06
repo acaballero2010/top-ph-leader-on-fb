@@ -1,0 +1,100 @@
+---
+title: "Top PH Leaders on Facebook"
+author: "Adonis Caballero"
+date: "Monday, April 06, 2015"
+output: html_document
+runtime: shiny
+---
+
+# Summary  
+Facebook is a great tool to communicate online and it is free. Many Filipinos are finding its value in improving relationships through constant communication and so are our political leaders. They are creating their page on Facebook as an additional means to communicate directly to the people and provide updated information related to their respective duties and responsibilities. With this, I think it is good to know the following: 
+
+1. Who among our elected top political leaders are most active and followed on Facebook.  
+2. Compare the number of votes they got when they ran for office to their number of FB page likes.  
+3. How many of the current FB users are liking their page. Knowing this will give us an idea how interested are FB users with our elected leaders.  
+
+### Quick Statistics:  
+Philippine Population: 100 Million [source](http://www.slideshare.net/carloisles/internet-usage-in-the-philippines-infographics)   
+Internet Users: 39.8 Million [source](http://www.slideshare.net/carloisles/internet-usage-in-the-philippines-infographics)   
+Facebook Users: 30 Million [source](http://www.slideshare.net/carloisles/internet-usage-in-the-philippines-infographics)   
+Facebook Users (age 18 and above): 25.5 Million [source](http://www.gethooked360.com/facebook-reaches-30-million-users-in-the-philippines/)
+ 
+
+# Loading the required datasets
+```{r, echo=TRUE}
+#########################################
+# Top PH Leaders and FB
+#########################################
+
+# SOURCE: Facebook (data as of April 4, 2015 4PM)
+datFbLikes <- read.csv("fb_likes.csv")
+
+# SOURCE: Wikipedia
+datSenatorial2010 <- read.csv("senatorial_election_2010.csv")
+datSenatorial2013 <- read.csv("senatorial_election_2013.csv")
+datPresVp <- read.csv("pres_vp.csv")
+
+# Renaming variables
+names(datFbLikes) <- c("name", "webpage", "fb_page_likes", "note")
+names(datSenatorial2010) <- c("rank", "name", "political_party", "num_votes", "percent_votes")
+names(datSenatorial2013) <- c("rank", "name", "coalition", "political_party", "num_votes", "percent_votes")
+names(datPresVp) <- c("name", "political_party", "num_votes", "percent_votes")
+
+# Merging datasets
+# Common variables are "name", "political_party", "num_votes", "percent_votes"
+# Dropping unnecessary variables
+datSen2010 <- datSenatorial2010[, c("name", "political_party", "num_votes", "percent_votes")]
+datSen2013 <- datSenatorial2013[, c("name", "political_party", "num_votes", "percent_votes")]
+
+datAll <- rbind(datPresVp, datSen2010, datSen2013)
+
+library(dplyr)
+library(ggplot2)
+datAllMerge <- left_join(datFbLikes, datAll, by="name")
+
+dat <- datAllMerge %>%
+  mutate(percent_likes_to_votes = round((fb_page_likes / num_votes)*100, digits=2)) %>%
+  mutate(percent_likes_to_users = round((fb_page_likes / 25500000)*100, digits=2)) %>%
+  arrange(desc(fb_page_likes))
+
+dat <- dat %>%
+  select(-webpage, -percent_votes)
+```
+
+# The final dataset for analysis
+```{r, echo=TRUE}
+dat
+```
+
+# Most number of votes
+```{r, echo=TRUE}
+mostVoted <- datFinal %>%
+  select(name, num_votes) %>%
+  arrange(desc(num_votes))
+
+datMostVotedOrder <- transform(dat, name = reorder(name, num_votes))
+ggplot(datMostVotedOrder, aes(name, num_votes, fill = num_votes)) + coord_flip() + geom_bar(stat = "identity", colour = "white") + xlab("Name of Public Official") + ylab("Number of Votes")
+```
+
+# Most number of FB page likes
+```{r, echo=TRUE}
+mostFamousOnFb <- dat %>%
+  select(name, fb_page_likes) %>%
+  arrange(desc(fb_page_likes))
+
+library(ggplot2)
+datFamousOnFbOrder <- transform(dat, name = reorder(name, fb_page_likes))
+
+ggplot(datFamousOnFbOrder, aes(name, fb_page_likes, fill = fb_page_likes)) + coord_flip() + geom_bar(stat = "identity") + xlab("Name of Public Official") + ylab("Number of Facebook Page Likes")
+```
+
+# Percentage of FB Page Likes to number of FB users
+```{r, echo=TRUE}
+percentLikesToUsers <- dat %>%
+  select(name, percent_likes_to_users) %>%
+  arrange(desc(percent_likes_to_users))
+
+library(ggplot2)
+datPercentLikesToUsers <- transform(dat, name = reorder(name, percent_likes_to_users))
+
+ggplot(datFamousOnFbOrder, aes(name, percent_likes_to_users, fill = percent_likes_to_users)) + coord_flip() + geom_bar(stat = "identity") + xlab("Name of Public Official") + ylab("Percentage: FB Page Likes vs FB Users")
