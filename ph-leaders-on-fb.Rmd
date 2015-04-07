@@ -23,7 +23,7 @@ Facebook Users (age 18 and above): 25.5 Million [source](http://www.gethooked360
 ### Loading the required datasets
 ```{r, echo=TRUE}
 #########################################
-# Top PH Leaders and FB
+# Top PH Leaders on FB
 #########################################
 
 # SOURCE: Facebook (data as of April 4, 2015 4PM)
